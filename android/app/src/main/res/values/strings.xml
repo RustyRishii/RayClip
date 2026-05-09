@@ -1,8 +1,0 @@
-<resources>
-    <string name="app_name">RayClip</string>
-    <string name="ime_name">RayClip Keyboard</string>
-    <string name="ime_subtype_en">English</string>
-    <string name="notification_channel_name">RayClip sync</string>
-    <string name="notification_title">RayClip is syncing clipboard</string>
-    <string name="accessibility_description">RayClip uses this service to sync your clipboard between your Android device and Mac. Enable this so you can keep using Gboard as your keyboard while clipboard sync runs in the background.</string>
-</resources>

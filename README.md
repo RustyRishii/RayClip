@@ -8,33 +8,24 @@ It is built around one practical constraint: a normal Android background app can
 
 - `server`: a small authenticated Node.js sync API with Server-Sent Events.
 - `mac-agent`: a continuously running macOS clipboard bridge using `pbpaste` and `pbcopy`.
-- `raycast-extension`: Raycast commands for pushing, pulling, and 10-second background sync.
-- `android`: an Android client skeleton with a foreground sync service and IME service.
+- `heliboard`: a fork of the open-source HeliBoard Android keyboard, with RayClip sync baked directly into its clipboard manager.
 
 ## Architecture
 
 ```text
-Android RayClip IME/service
+HeliBoard (Android Keyboard)
   -> POST /v1/clips
   -> RayClip server
-  -> SSE / polling
-  -> mac-agent or Raycast
+  -> SSE stream
+  -> mac-agent
   -> macOS clipboard
 
-mac-agent or Raycast
+mac-agent
   -> POST /v1/clips
   -> RayClip server
-  -> Android polling
+  -> Android polling (every 2.5s)
   -> Android clipboard
 ```
-
-## MVP Status
-
-This repo is intentionally dependency-light so the core can run immediately:
-
-- The server and macOS agent use only built-in Node.js modules.
-- The Raycast extension uses Raycast's normal extension tooling.
-- The Android project is a starter Android Studio project. It uses Java and plain Android APIs.
 
 ## Quick Start
 
@@ -76,37 +67,26 @@ cp .env.example .env
 npm start
 ```
 
-This is the most reliable macOS side because it runs continuously. Raycast background commands are limited to scheduled intervals.
+This runs continuously in the background using `pbcopy` and `pbpaste`.
 
-### 3. Run the Raycast extension
+### 3. Build and install HeliBoard
+
+Open `~/projects/RayClip/heliboard` in Android Studio, or build it via Gradle:
 
 ```sh
-cd ~/projects/RayClip/raycast-extension
-npm install
-npm run dev
+cd ~/projects/RayClip/heliboard
+./gradlew assembleDebugNoMinify
 ```
 
-Then configure the extension preferences:
+Install the resulting APK on your Android 12+ device, then:
 
-- API URL: your server URL
-- Token: the same `RAYCLIP_TOKEN`
-- Device ID: something stable like `macbook-air`
-- Device name: something human-readable like `Rishi MacBook Air`
+1. Go to your Android settings and enable HeliBoard in your Keyboard list.
+2. Set HeliBoard as your default keyboard.
+3. Open the HeliBoard settings app.
+4. Go to **RayClip Sync** (between Advanced and About).
+5. Enter your server URL and token, and tap Save.
 
-### 4. Build the Android client
-
-Open `~/projects/RayClip/android` in Android Studio.
-
-Run the app on your Android 12 device, then:
-
-1. Open the RayClip app.
-2. Enter your server URL and token.
-3. Tap `Test Server Connection` and confirm success.
-4. Tap `Start Sync Service`.
-5. Enable RayClip as an input method in Android settings.
-6. Select RayClip as the current keyboard.
-
-The IME route is the important part. Without it, Android may block clipboard reads while the app is in the background.
+By operating as the default IME, HeliBoard is permitted to read and write to the Android clipboard in the background without Android 12+ blocking it.
 
 ## API
 
@@ -149,6 +129,5 @@ Recommended production hardening:
 ## Known Limitations
 
 - Android clipboard monitoring requires the RayClip IME/default keyboard workaround.
-- Raycast background refresh is interval-based, not truly instant.
 - Android background service behavior can vary by OEM battery settings.
 - Images/files are not implemented yet. This MVP syncs text.
