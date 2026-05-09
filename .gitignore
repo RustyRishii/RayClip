@@ -1,0 +1,13 @@
+.DS_Store
+.env
+node_modules/
+dist/
+build/
+.gradle/
+local.properties
+
+server/data/
+android/.idea/
+android/**/build/
+android/**/.cxx/
+android/captures/
