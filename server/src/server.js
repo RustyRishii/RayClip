@@ -10,7 +10,7 @@ const host = process.env.RAYCLIP_HOST || "0.0.0.0";
 const port = Number(process.env.PORT || process.env.RAYCLIP_PORT || 8787);
 const token = process.env.RAYCLIP_TOKEN || "";
 const ttlSeconds = Number(process.env.RAYCLIP_TTL_SECONDS || 3600);
-const maxClipBytes = Number(process.env.RAYCLIP_MAX_CLIP_BYTES || 262144);
+const maxClipBytes = Number(process.env.RAYCLIP_MAX_CLIP_BYTES || 5242880);
 const dataFile = process.env.RAYCLIP_DATA_FILE || "./data/clips.jsonl";
 const dataPath = path.resolve(process.cwd(), dataFile);
 
@@ -69,11 +69,13 @@ async function handleCreateClip(req, res) {
   }
 
   const text = typeof body.text === "string" ? body.text : "";
+  const data = typeof body.data === "string" ? body.data : "";
+  const contentType = typeof body.contentType === "string" ? body.contentType : (data ? "image/png" : "text/plain");
   const sourceDeviceId = sanitizeId(body.sourceDeviceId);
   const sourceDeviceName = sanitizeName(body.sourceDeviceName);
 
-  if (!text) {
-    return sendJson(res, 400, { error: "empty_text" });
+  if (!text && !data) {
+    return sendJson(res, 400, { error: "empty_content" });
   }
 
   if (!sourceDeviceId) {
@@ -81,13 +83,15 @@ async function handleCreateClip(req, res) {
   }
 
   const now = new Date();
+  const contentHash = text ? sha256(text) : sha256(data);
   const clip = {
     id: crypto.randomUUID(),
     text,
-    contentType: "text/plain",
+    data,
+    contentType,
     sourceDeviceId,
     sourceDeviceName,
-    sha256: sha256(text),
+    sha256: contentHash,
     createdAt: now.toISOString(),
     expiresAt: new Date(now.getTime() + ttlSeconds * 1000).toISOString()
   };
